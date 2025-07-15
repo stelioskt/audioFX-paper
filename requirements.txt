@@ -1,0 +1,17 @@
+datasets
+kagglehub
+librosa
+matplotlib
+midi2audio
+muspy
+numpy
+pandas
+pedalboard
+seaborn
+scikit-learn
+soundfile
+torch
+tqdm
+transformers
+xgboost
+ipython
