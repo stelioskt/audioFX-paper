@@ -15,3 +15,7 @@ tqdm
 transformers
 xgboost
 ipython
+dotenv
+accelerate
+nnAudio
+fluidsynth
