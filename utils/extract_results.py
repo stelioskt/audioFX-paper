@@ -24,7 +24,6 @@ NUM_LEVEL = int(os.getenv("NUM_LEVEL"))
 def sample_dataset(df, dataset_name, sample_ratio=SAMPLE_RATIO, random_state=RANDOM_STATE):
     if dataset_name == 'deam':
         # simple random 20%
-        print(type(RANDOM_STATE))
         return df.sample(frac=sample_ratio, random_state=random_state).reset_index(drop=True)
 
     elif dataset_name == 'emopia':
