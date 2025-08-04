@@ -10,7 +10,7 @@ import seaborn as sns
 
 load_dotenv()
 DATA_DIR = os.getenv("DATA_DIR")
-NUM_LEVEL = os.getenv("NUM_LEVEL")
+NUM_LEVEL = int(os.getenv("NUM_LEVEL"))
 OUTPUT_DIR = os.getenv("OUTPUT_DIR")
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -171,7 +171,7 @@ def correlation_matrix(deam, prefix):
     plt.close()
 
 
-def chi_square(emopia):
+def chi_square(emopia, prefix):
     # Chi-square test for association between effect level and labels
     results = []
     for effect in emopia['effect'].unique():

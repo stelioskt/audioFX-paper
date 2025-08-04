@@ -53,11 +53,11 @@ print("Preparing datasets...")
 
 # Step 2: Model Evaluation
 print("Evaluating models...")
-model_eval(mert, mert_proc, mert_sr, clap, clap_proc, clap_sr, qwen, qwen_proc, qwen_sr)
+# model_eval(mert, mert_proc, mert_sr, clap, clap_proc, clap_sr, qwen, qwen_proc, qwen_sr)
 
 # Step 3: Produce Results
 print("Extracting results...")
-extract_results(mert, mert_proc, mert_sr, clap, clap_proc, clap_sr, qwen, qwen_proc, qwen_sr)
+# extract_results(mert, mert_proc, mert_sr, clap, clap_proc, clap_sr, qwen, qwen_proc, qwen_sr)
 
 # Step 4: Result Analysis
 print("Visualising results...")
