@@ -21,24 +21,6 @@ RANDOM_STATE = int(os.getenv("RANDOM_STATE"))
 NUM_LEVEL = int(os.getenv("NUM_LEVEL"))
 
 
-def sample_dataset(df, dataset_name, sample_ratio=SAMPLE_RATIO, random_state=RANDOM_STATE):
-    if dataset_name == 'deam':
-        # simple random 20%
-        return df.sample(frac=sample_ratio, random_state=random_state).reset_index(drop=True)
-
-    elif dataset_name == 'emopia':
-        # balanced 20%: total ~0.2*len, then even per class
-        df = df.copy()
-        n_target    = int(len(df) * sample_ratio)
-        n_per_class = n_target // df['emo_class'].nunique()
-        return (df.groupby('emo_class', group_keys=False)
-              .apply(lambda grp: grp.sample(n=n_per_class, random_state=random_state))
-              .reset_index(drop=True))
-
-    else:
-        return df
-
-
 def extract_features_fx(df, processor, model, model_type, dataset_name, target_sr, max_duration=15):
     records = []
 
@@ -157,8 +139,6 @@ def run_pipeline_fx(dataset_name, dataset_dir, model_type, processor, model, tar
 
     # 1) load and sample dataset
     df = pd.read_csv(os.path.join(dataset_dir, f"{dataset_name}.csv"))
-    df = sample_dataset(df, dataset_name)
-    print(f"→ Sampled {len(df)} / {dataset_name}.csv (20%)")
 
     # 2) extract FX-augmented embeddings
     features_df = extract_features_fx(df, processor, model, model_type, dataset_name, target_sr)

@@ -12,8 +12,10 @@ load_dotenv()
 DATA_DIR = os.getenv("DATA_DIR")
 NUM_LEVEL = int(os.getenv("NUM_LEVEL"))
 OUTPUT_DIR = os.getenv("OUTPUT_DIR")
+EMOTION_DIR = os.path.join(OUTPUT_DIR, "emotion/")
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(EMOTION_DIR, exist_ok=True)
 
 
 # ====================== Stats ======================
@@ -28,7 +30,7 @@ def compute_stats_deam(deam, model):
     ).reset_index()
 
     # Print results
-    deam_summary.to_csv(os.path.join(OUTPUT_DIR, f"{model}_deam_summary.csv"), index=False)
+    deam_summary.to_csv(os.path.join(EMOTION_DIR, f"{model}_deam_summary.csv"), index=False)
 
     return deam_summary
 
@@ -44,7 +46,7 @@ def compute_stats_emopia(emopia, model):
     emopia_pivot_normalized = emopia_pivot.div(emopia_pivot.sum(axis=1), axis=0)
 
     # Print results
-    emopia_pivot_normalized.to_csv(os.path.join(OUTPUT_DIR, f"{model}_emopia_summary.csv"))
+    emopia_pivot_normalized.to_csv(os.path.join(EMOTION_DIR, f"{model}_emopia_summary.csv"))
 
     return emopia_pivot_normalized
 
@@ -58,7 +60,7 @@ def plot_heatmap_deam(deam_summary, prefix):
     plt.title('Mean Valence by Effect and Level')
     plt.xlabel('Level')
     plt.ylabel('Effect Name')
-    plt.savefig(os.path.join(OUTPUT_DIR, f"{prefix}_mean_valence_heatmap.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(EMOTION_DIR, f"{prefix}_mean_valence_heatmap.png"), dpi=300, bbox_inches='tight')
     plt.close()
 
     plt.figure(figsize=(10, 6))
@@ -67,7 +69,7 @@ def plot_heatmap_deam(deam_summary, prefix):
     plt.title('Mean Arousal by Effect and Level')
     plt.xlabel('Level')
     plt.ylabel('Effect Name')
-    plt.savefig(os.path.join(OUTPUT_DIR, f"{prefix}_mean_arousal_heatmap.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(EMOTION_DIR, f"{prefix}_mean_arousal_heatmap.png"), dpi=300, bbox_inches='tight')
     plt.close()
 
 
@@ -82,7 +84,7 @@ def plot_va_trends(deam_summary, prefix):
     plt.xlabel('Level')
     plt.ylabel('Mean Values')
     plt.legend()
-    plt.savefig(os.path.join(OUTPUT_DIR, f"{prefix}_va_trends.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(EMOTION_DIR, f"{prefix}_va_trends.png"), dpi=300, bbox_inches='tight')
     plt.close()
 
 
@@ -111,7 +113,7 @@ def plot_va_plane(deam, prefix):
         plt.axvline(0, color='black', linewidth=0.5, linestyle='--', alpha=0.7)
         plt.grid(alpha=0.3)
         plt.legend(title='Level', fontsize=10)
-        plt.savefig(os.path.join(OUTPUT_DIR, f"{prefix}_va_plane_{effect}.png"), dpi=300, bbox_inches='tight')
+        plt.savefig(os.path.join(EMOTION_DIR, f"{prefix}_va_plane_{effect}.png"), dpi=300, bbox_inches='tight')
         plt.close()
 
 
@@ -127,7 +129,7 @@ def plot_label_proportions(emopia_pivot_normalized, prefix):
         plt.xlabel('Level')
         plt.ylabel('Proportion')
         plt.legend(title='Label')
-        plt.savefig(os.path.join(OUTPUT_DIR, f"{prefix}_label_proportions_{effect}.png"), dpi=300, bbox_inches='tight')
+        plt.savefig(os.path.join(EMOTION_DIR, f"{prefix}_label_proportions_{effect}.png"), dpi=300, bbox_inches='tight')
         plt.close()
 
 
@@ -158,7 +160,7 @@ def plot_radar_charts(emopia_pivot_normalized, prefix):
     for effect in emopia_pivot_normalized.index.get_level_values('effect').unique():
         radar_chart(emopia_pivot_normalized.loc[effect],
                     f'Radar Chart for {effect}',
-                    os.path.join(OUTPUT_DIR, f"{prefix}_radar_{effect}.png"))
+                    os.path.join(EMOTION_DIR, f"{prefix}_radar_{effect}.png"))
 
 
 # ====================== Correlation & Chi-Square ======================
@@ -167,7 +169,7 @@ def correlation_matrix(deam, prefix):
     correlation = deam[['level', 'valence', 'arousal']].corr()
     sns.heatmap(correlation, annot=True, cmap='coolwarm')
     plt.title('Correlation Heatmap: Level, Valence, and Arousal')
-    plt.savefig(os.path.join(OUTPUT_DIR, f"{prefix}_correlation_heatmap.png"), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(EMOTION_DIR, f"{prefix}_correlation_heatmap.png"), dpi=300, bbox_inches='tight')
     plt.close()
 
 
@@ -180,7 +182,7 @@ def chi_square(emopia, prefix):
         chi2, p, dof, expected = chi2_contingency(contingency_table)
         results.append(f'{effect}: Chi-square = {chi2:.2f}, p-value = {p:.4f}')
     
-    with open(os.path.join(OUTPUT_DIR, f"{prefix}_chi_square_results.txt"), "w") as f:
+    with open(os.path.join(EMOTION_DIR, f"{prefix}_chi_square_results.txt"), "w") as f:
         f.write("\n".join(results))
 
 

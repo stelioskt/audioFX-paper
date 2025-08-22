@@ -19,3 +19,4 @@ dotenv
 accelerate
 nnAudio
 fluidsynth
+umap

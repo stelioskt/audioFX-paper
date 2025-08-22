@@ -4,7 +4,7 @@ import numpy as np
 import os
 import pandas as pd
 import pickle
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score, classification_report
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score, precision_score, recall_score, f1_score, classification_report
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import torch
@@ -113,10 +113,9 @@ def prepare_data_regression(df):
     scaler = StandardScaler().fit(X)
     X_scaled = scaler.transform(X)
 
-    X_train, X_temp, y_train, y_temp = train_test_split(X_scaled, y, test_size=0.3, random_state=42)
-    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, random_state=42)
 
-    return X_train, X_val, X_test, y_train, y_val, y_test, scaler
+    return X_train, X_test, y_train, y_test, scaler
 
 
 def tune_xgb_reg(X_train, y_train):
@@ -138,24 +137,36 @@ def tune_xgb_reg(X_train, y_train):
     return grid.best_estimator_
 
 
-def run_regression_pipeline(df, model_tag):
-    X_train, X_val, X_test, y_train, y_val, y_test, scaler = prepare_data_regression(df)
+def run_regression_pipeline(df, dataset_name, model_type):
+    model_tag = f"{dataset_name}_{model_type}"
+    X_train, X_test, y_train, y_test, scaler = prepare_data_regression(df)
+    result = []
     # Split targets
     for target_idx, name in enumerate(["Valence", "Arousal"]):
         y_tr = y_train[:, target_idx]
         y_te = y_test[:, target_idx]
 
-        model = tune_xgb_reg(X_train, y_train[:, target_idx])
+        model = tune_xgb_reg(X_train, y_tr)
         preds = model.predict(X_test)
         mae = mean_absolute_error(y_te, preds)
-        rmse = np.sqrt(mean_squared_error(y_te, preds))
+        mse = mean_squared_error(y_te, preds)
         r2 = r2_score(y_te, preds)
 
-        logging.info(f"[{model_tag}][{name}] MAE: {mae:.4f}, RMSE: {rmse:.4f}, R2: {r2:.4f}")
+        logging.info(f"[{model_tag}][{name}] MAE: {mae:.4f}, MSE: {mse:.4f}, R2: {r2:.4f}")
         model.save_model(os.path.join(MODEL_DIR, f"{model_tag}_{name.lower()}.json"))
+        
+        result.append({
+            "model": model_type,
+            "target": name,
+            "mae": mae,
+            "mse": mse,
+            "r2": r2
+        })
 
     with open(os.path.join(MODEL_DIR, f"{model_tag}_scaler.pkl"), "wb") as f:
         pickle.dump(scaler, f)
+    
+    return result
 
 
 # ================== Classification Logic ==================
@@ -192,11 +203,15 @@ def tune_xgb_clf(X_train, y_train, X_val, y_val):
     return grid.best_estimator_
 
 
-def run_classification_pipeline(df, model_tag):
+def run_classification_pipeline(df, dataset_name, model_type):
+    model_tag = f"{dataset_name}_{model_type}"
     X_train, X_val, X_test, y_train, y_val, y_test, label_enc, scaler = prepare_data_classification(df)
     model = tune_xgb_clf(X_train, y_train, X_val, y_val)
     preds = model.predict(X_test)
     acc = accuracy_score(y_test, preds)
+    prec = precision_score(y_test, preds, average="weighted", zero_division=0)
+    rec = recall_score(y_test, preds, average="weighted", zero_division=0)
+    f1 = f1_score(y_test, preds, average="weighted", zero_division=0)
     logging.info(f"[{model_tag}][Classification] Accuracy: {acc:.4f}")
     logging.info(classification_report(label_enc.inverse_transform(y_test),
                                 label_enc.inverse_transform(preds)))
@@ -205,6 +220,14 @@ def run_classification_pipeline(df, model_tag):
         pickle.dump(scaler, f)
     with open(os.path.join(MODEL_DIR, f"{model_tag}_enc.pkl"), "wb") as f:
         pickle.dump(label_enc, f)
+    
+    return {
+        "model": model_type,
+        "accuracy": acc,
+        "precision": prec,
+        "recall": rec,
+        "f1": f1
+    }
 
 
 # ================== Pipeline Definition ==================
@@ -215,18 +238,26 @@ def run_pipeline(dataset_name, dataset_dir, model_type, processor, model, target
     df = extract_features(df, processor, model, model_type, target_sr)
     save_features(df, dataset_name, model_type)
 
-    model_tag = f"{dataset_name}_{model_type}"
     if dataset_name == "deam":
-        run_regression_pipeline(df, model_tag)
+        run_regression_pipeline(df, dataset_name, model_type)
     else:
-        run_classification_pipeline(df, model_tag)
+        run_classification_pipeline(df, dataset_name, model_type)
 
 
 def model_eval(mert, mert_proc, mert_sr, clap, clap_proc, clap_sr, qwen, qwen_proc, qwen_sr):
-    run_pipeline("deam", deam_dir, "mert", mert_proc, mert, mert_sr)
-    run_pipeline("deam", deam_dir, "clap", clap_proc, clap, clap_sr)
-    run_pipeline("deam", deam_dir, "qwen", qwen_proc, qwen, qwen_sr)
-    run_pipeline("emopia", emopia_dir, "mert", mert_proc, mert, mert_sr)
-    run_pipeline("emopia", emopia_dir, "clap", clap_proc, clap, clap_sr)
-    run_pipeline("emopia", emopia_dir, "qwen", qwen_proc, qwen, qwen_sr)
+    deam_results, emopia_results = [], []
+
+    deam_results.append(run_pipeline("deam", deam_dir, "mert", mert_proc, mert, mert_sr))
+    deam_results.append(run_pipeline("deam", deam_dir, "clap", clap_proc, clap, clap_sr))
+    deam_results.append(run_pipeline("deam", deam_dir, "qwen", qwen_proc, qwen, qwen_sr))
+    emopia_results.append(run_pipeline("emopia", emopia_dir, "mert", mert_proc, mert, mert_sr))
+    emopia_results.append(run_pipeline("emopia", emopia_dir, "clap", clap_proc, clap, clap_sr))
+    emopia_results.append(run_pipeline("emopia", emopia_dir, "qwen", qwen_proc, qwen, qwen_sr))
+    
+    # Save the results
+    with open(os.path.join(DATA_DIR, "deam_results.pkl"), "wb") as f:
+        pickle.dump(deam_results, f)
+    with open(os.path.join(DATA_DIR, "emopia_results.pkl"), "wb") as f:
+        pickle.dump(emopia_results, f)
+
     print("Model evaluation complete!\n")
