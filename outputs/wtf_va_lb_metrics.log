@@ -1,0 +1,59 @@
+[2025-09-03 18:49:57,146] INFO: Starting feature extraction for mert...
+[2025-09-04 10:07:59,633] INFO: Starting feature extraction for mert...
+[2025-09-04 10:08:01,295] INFO: [Feature 0/235] CPU: 9.9% | RAM: 1707.77 MB
+[2025-09-04 10:08:11,975] INFO: [Feature 50/235] CPU: 9.1% | RAM: 1739.21 MB
+[2025-09-04 10:08:21,914] INFO: [Feature 100/235] CPU: 24.8% | RAM: 1752.04 MB
+[2025-09-04 10:08:32,039] INFO: [Feature 150/235] CPU: 9.5% | RAM: 1760.30 MB
+[2025-09-04 10:08:42,447] INFO: [Feature 200/235] CPU: 9.9% | RAM: 1758.77 MB
+[2025-09-04 10:08:49,461] INFO: Feature extraction complete in 49.83 seconds
+[2025-09-04 10:09:14,854] INFO: [wtf_va_mert][Valence] MAE: 0.8709, MSE: 1.2635, R2: 0.0255
+[2025-09-04 10:09:34,457] INFO: [wtf_va_mert][Arousal] MAE: 1.0407, MSE: 1.6544, R2: 0.0031
+[2025-09-04 10:09:34,461] INFO: Starting feature extraction for clap...
+[2025-09-04 10:09:34,852] INFO: [Feature 0/235] CPU: 77.9% | RAM: 1885.57 MB
+[2025-09-04 10:09:44,477] INFO: [Feature 50/235] CPU: 50.9% | RAM: 1926.71 MB
+[2025-09-04 10:09:49,918] INFO: [Feature 100/235] CPU: 75.4% | RAM: 1938.21 MB
+[2025-09-04 10:09:53,895] INFO: [Feature 150/235] CPU: 99.7% | RAM: 1957.43 MB
+[2025-09-04 10:09:57,875] INFO: [Feature 200/235] CPU: 98.9% | RAM: 1947.56 MB
+[2025-09-04 10:10:00,751] INFO: Feature extraction complete in 26.29 seconds
+[2025-09-04 10:10:10,744] INFO: [wtf_va_clap][Valence] MAE: 0.8862, MSE: 1.3735, R2: -0.0593
+[2025-09-04 10:10:20,763] INFO: [wtf_va_clap][Arousal] MAE: 0.9766, MSE: 1.4867, R2: 0.1041
+[2025-09-04 10:10:20,766] INFO: Starting feature extraction for qwen...
+[2025-09-04 10:10:21,459] INFO: [Feature 0/235] CPU: 86.0% | RAM: 2218.71 MB
+[2025-09-04 10:10:32,602] INFO: [Feature 50/235] CPU: 14.4% | RAM: 2283.90 MB
+[2025-09-04 10:10:46,975] INFO: [Feature 100/235] CPU: 11.4% | RAM: 2285.20 MB
+[2025-09-04 10:10:58,746] INFO: [Feature 150/235] CPU: 13.6% | RAM: 2303.21 MB
+[2025-09-04 10:11:09,811] INFO: [Feature 200/235] CPU: 14.3% | RAM: 2295.38 MB
+[2025-09-04 10:11:17,366] INFO: Feature extraction complete in 56.60 seconds
+[2025-09-04 10:12:33,378] INFO: [wtf_va_qwen][Valence] MAE: 0.8469, MSE: 1.2925, R2: 0.0032
+[2025-09-04 10:13:50,021] INFO: [wtf_va_qwen][Arousal] MAE: 1.0695, MSE: 1.7225, R2: -0.0379
+[2025-09-05 08:15:25,003] INFO: Starting feature extraction for mert...
+[2025-09-05 08:15:25,980] INFO: [Feature 0/235] CPU: 7.1% | RAM: 1687.39 MB
+[2025-09-05 08:15:31,329] INFO: [Feature 50/235] CPU: 15.1% | RAM: 1740.65 MB
+[2025-09-05 08:15:36,580] INFO: [Feature 100/235] CPU: 16.5% | RAM: 1723.28 MB
+[2025-09-05 08:15:41,856] INFO: [Feature 150/235] CPU: 15.0% | RAM: 1749.41 MB
+[2025-09-05 08:15:47,136] INFO: [Feature 200/235] CPU: 15.1% | RAM: 1738.25 MB
+[2025-09-05 08:15:50,770] INFO: Feature extraction complete in 25.77 seconds
+[2025-09-05 08:20:13,218] INFO: Starting feature extraction for mert...
+[2025-09-05 08:20:14,130] INFO: [Feature 0/235] CPU: 11.0% | RAM: 1678.37 MB
+[2025-09-05 08:20:19,482] INFO: [Feature 50/235] CPU: 15.0% | RAM: 1733.03 MB
+[2025-09-05 08:20:24,719] INFO: [Feature 100/235] CPU: 15.1% | RAM: 1733.09 MB
+[2025-09-05 08:20:30,016] INFO: [Feature 150/235] CPU: 15.0% | RAM: 1731.00 MB
+[2025-09-05 08:20:35,313] INFO: [Feature 200/235] CPU: 15.1% | RAM: 1729.10 MB
+[2025-09-05 08:20:38,942] INFO: Feature extraction complete in 25.72 seconds
+[2025-09-05 08:20:54,322] INFO: [wtf_lb_mert][Multilabel] F1-micro: 0.2136 | F1-macro: 0.1533
+[2025-09-05 08:20:54,343] INFO: Starting feature extraction for clap...
+[2025-09-05 08:20:54,509] INFO: [Feature 0/235] CPU: 43.3% | RAM: 1856.72 MB
+[2025-09-05 08:20:58,636] INFO: [Feature 50/235] CPU: 97.3% | RAM: 1897.86 MB
+[2025-09-05 08:21:02,589] INFO: [Feature 100/235] CPU: 98.3% | RAM: 1909.52 MB
+[2025-09-05 08:21:06,650] INFO: [Feature 150/235] CPU: 99.4% | RAM: 1928.68 MB
+[2025-09-05 08:21:10,606] INFO: [Feature 200/235] CPU: 98.9% | RAM: 1918.93 MB
+[2025-09-05 08:21:13,359] INFO: Feature extraction complete in 19.02 seconds
+[2025-09-05 08:21:20,153] INFO: [wtf_lb_clap][Multilabel] F1-micro: 0.1667 | F1-macro: 0.1158
+[2025-09-05 08:21:20,174] INFO: Starting feature extraction for qwen...
+[2025-09-05 08:21:20,625] INFO: [Feature 0/235] CPU: 62.5% | RAM: 2191.23 MB
+[2025-09-05 08:21:31,768] INFO: [Feature 50/235] CPU: 14.7% | RAM: 2256.29 MB
+[2025-09-05 08:21:42,830] INFO: [Feature 100/235] CPU: 14.8% | RAM: 2257.56 MB
+[2025-09-05 08:21:53,903] INFO: [Feature 150/235] CPU: 14.7% | RAM: 2265.78 MB
+[2025-09-05 08:22:05,001] INFO: [Feature 200/235] CPU: 16.3% | RAM: 2264.39 MB
+[2025-09-05 08:22:12,593] INFO: Feature extraction complete in 52.42 seconds
+[2025-09-05 08:23:17,483] INFO: [wtf_lb_qwen][Multilabel] F1-micro: 0.1443 | F1-macro: 0.1036

@@ -1,0 +1,5 @@
+effect,scenario,mean_valence,std_valence,mean_arousal,std_arousal
+scenario,Original,-0.062037893,0.37225464,0.37471,0.36362275
+scenario,Pink Floyd,-0.012644072,0.15219401,0.34037793,0.21787044
+scenario,Rage Against The Machine,0.0020050611,0.13114646,0.39387062,0.2064596
+scenario,U2,-0.024893202,0.15765947,0.31970325,0.20806742

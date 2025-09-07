@@ -1,0 +1,6 @@
+reverb: Chi-square = 166.89, p-value = 0.0000
+delay: Chi-square = 107.58, p-value = 0.0000
+distortion: Chi-square = 677.12, p-value = 0.0000
+eq: Chi-square = 60.55, p-value = 0.0002
+chorus: Chi-square = 519.69, p-value = 0.0000
+phaser: Chi-square = 25.41, p-value = 0.5516

@@ -6,7 +6,8 @@ import pandas as pd
 import pickle
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score, precision_score, recall_score, f1_score, classification_report
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.preprocessing import StandardScaler, LabelEncoder, MultiLabelBinarizer
 import torch
 from tqdm import tqdm
 from xgboost import XGBRegressor, XGBClassifier
@@ -17,9 +18,14 @@ import time
 load_dotenv()
 emopia_dir = os.getenv("EMOPIA_DIR")
 deam_dir = os.getenv("DEAM_DIR")
+wtf_dir = os.getenv("WITHEFLOW_DIR")
 DATA_DIR = os.getenv("DATA_DIR")
 MODEL_DIR = os.getenv("MODEL_DIR")
+RND_STATE = int(os.getenv("RANDOM_STATE"))
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+classes = ["joyfulActivation", "neutral", "nostalgia", "peacefulness", "power",
+           "sadness", "tenderness", "tension", "transcendence", "wonder"]
 
 
 # Setup logging
@@ -97,7 +103,11 @@ def extract_features(df, processor, model, model_type, target_sr, max_duration=1
 
 def save_features(df, dataset_name, model_tag):
     out_path = os.path.join(DATA_DIR, f"{dataset_name}_{model_tag}_features.pkl")
-    meta_cols = {"deam": ["valence", "arousal"], "emopia": ["emo_class"]}[dataset_name]
+    meta_cols = {"deam": ["valence", "arousal"],
+                 "wtf_va": ["valence", "arousal"],
+                 "emopia": ["emo_class"],
+                 "wtf_lb": ["labels"]
+                }[dataset_name]
     save_df = df[["path", "features"] + meta_cols].copy()
     save_df.to_pickle(out_path)
     print(f"Saved features to {out_path}")
@@ -198,7 +208,7 @@ def tune_xgb_clf(X_train, y_train, X_val, y_val):
                         n_jobs=-1)
 
     grid = GridSearchCV(clf, param_grid, cv=3, scoring="accuracy", n_jobs=-1, verbose=1)
-    grid.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
+    grid.fit(X_train, y_train)
 
     return grid.best_estimator_
 
@@ -230,6 +240,74 @@ def run_classification_pipeline(df, dataset_name, model_type):
     }
 
 
+# ============= Multi-label Classification Logic =============
+
+def prepare_data_multilabel(df, labels_col="labels", classes=None):
+    """
+    df[labels_col] should contain iterables (list/tuple/set) of label strings, or stringified lists.
+    """
+    y_list = df[labels_col].apply(lambda s: s.split(";"))
+    mlb = MultiLabelBinarizer(classes=classes)
+    Y = mlb.fit_transform(y_list)
+
+    X = np.vstack(df["features"].values)
+    scaler = StandardScaler().fit(X)
+    X_scaled = scaler.transform(X)
+
+    X_train, X_temp, Y_train, Y_temp = train_test_split(
+        X_scaled, Y, test_size=0.3, random_state=42
+    )
+    X_val, X_test, Y_val, Y_test = train_test_split(
+        X_temp, Y_temp, test_size=0.5, random_state=42
+    )
+    return X_train, X_val, X_test, Y_train, Y_val, Y_test, mlb, scaler
+
+
+def run_multilabel_pipeline(df, dataset_name, model_type, labels_col="labels", classes=None, threshold=0.5):
+    model_tag = f"{dataset_name}_{model_type}"
+    X_train, X_val, X_test, Y_train, Y_val, Y_test, mlb, scaler = prepare_data_multilabel(
+        df, labels_col=labels_col, classes=classes
+    )
+
+    base_xgb = XGBClassifier(
+        objective="binary:logistic",
+        n_estimators=300,
+        max_depth=5,
+        learning_rate=0.05,
+        subsample=0.9,
+        colsample_bytree=0.9,
+        reg_lambda=1.0,
+        n_jobs=-1,
+        random_state=RND_STATE,
+        eval_metric="logloss",
+        tree_method="hist"
+    )
+    clf = OneVsRestClassifier(base_xgb)
+    clf.fit(X_train, Y_train)
+
+    Y_test_pred = (clf.predict_proba(X_test) >= threshold).astype(int)
+    f1_micro = f1_score(Y_test, Y_test_pred, average="micro", zero_division=0)
+    f1_macro = f1_score(Y_test, Y_test_pred, average="macro", zero_division=0)
+    logging.info(f"[{model_tag}][Multilabel] F1-micro: {f1_micro:.4f} | F1-macro: {f1_macro:.4f}")
+    
+    per_label_acc_array = (Y_test == Y_test_pred).mean(axis=0)
+    per_label_acc = dict(zip(mlb.classes_, per_label_acc_array))
+
+    with open(os.path.join(MODEL_DIR, f"{model_tag}_clf.pkl"), "wb") as f:
+        pickle.dump(clf, f)
+    with open(os.path.join(MODEL_DIR, f"{model_tag}_scaler.pkl"), "wb") as f:
+        pickle.dump(scaler, f)
+    with open(os.path.join(MODEL_DIR, f"{model_tag}_mlb.pkl"), "wb") as f:
+        pickle.dump(mlb, f)
+
+    return {
+        "model": model_type,
+        "f1_micro": f1_micro,
+        "f1_macro": f1_macro,
+        "n_labels": len(mlb.classes_),
+        "per_label_accuracy": per_label_acc
+    }
+
 # ================== Pipeline Definition ==================
 
 def run_pipeline(dataset_name, dataset_dir, model_type, processor, model, target_sr):
@@ -238,14 +316,16 @@ def run_pipeline(dataset_name, dataset_dir, model_type, processor, model, target
     df = extract_features(df, processor, model, model_type, target_sr)
     save_features(df, dataset_name, model_type)
 
-    if dataset_name == "deam":
-        run_regression_pipeline(df, dataset_name, model_type)
-    else:
-        run_classification_pipeline(df, dataset_name, model_type)
+    if dataset_name in {"deam", "wtf_va"}:
+        return run_regression_pipeline(df, dataset_name, model_type)
+    elif dataset_name == "emopia":
+        return run_classification_pipeline(df, dataset_name, model_type)
+    else:   # wtf_lb
+        return run_multilabel_pipeline(df, dataset_name, model_type, classes=classes)
 
 
 def model_eval(mert, mert_proc, mert_sr, clap, clap_proc, clap_sr, qwen, qwen_proc, qwen_sr):
-    deam_results, emopia_results = [], []
+    deam_results, emopia_results, wtf_va_results, wtf_lb_results = [], [], [], []
 
     deam_results.append(run_pipeline("deam", deam_dir, "mert", mert_proc, mert, mert_sr))
     deam_results.append(run_pipeline("deam", deam_dir, "clap", clap_proc, clap, clap_sr))
@@ -253,11 +333,21 @@ def model_eval(mert, mert_proc, mert_sr, clap, clap_proc, clap_sr, qwen, qwen_pr
     emopia_results.append(run_pipeline("emopia", emopia_dir, "mert", mert_proc, mert, mert_sr))
     emopia_results.append(run_pipeline("emopia", emopia_dir, "clap", clap_proc, clap, clap_sr))
     emopia_results.append(run_pipeline("emopia", emopia_dir, "qwen", qwen_proc, qwen, qwen_sr))
+    wtf_va_results.append(run_pipeline("wtf_va", wtf_dir, "mert", mert_proc, mert, mert_sr))
+    wtf_va_results.append(run_pipeline("wtf_va", wtf_dir, "clap", clap_proc, clap, clap_sr))
+    wtf_va_results.append(run_pipeline("wtf_va", wtf_dir, "qwen", qwen_proc, qwen, qwen_sr))
+    wtf_lb_results.append(run_pipeline("wtf_lb", wtf_dir, "mert", mert_proc, mert, mert_sr))
+    wtf_lb_results.append(run_pipeline("wtf_lb", wtf_dir, "clap", clap_proc, clap, clap_sr))
+    wtf_lb_results.append(run_pipeline("wtf_lb", wtf_dir, "qwen", qwen_proc, qwen, qwen_sr))
     
     # Save the results
     with open(os.path.join(DATA_DIR, "deam_results.pkl"), "wb") as f:
         pickle.dump(deam_results, f)
     with open(os.path.join(DATA_DIR, "emopia_results.pkl"), "wb") as f:
         pickle.dump(emopia_results, f)
+    with open(os.path.join(DATA_DIR, "wtf_va_results.pkl"), "wb") as f:
+        pickle.dump(wtf_va_results, f)
+    with open(os.path.join(DATA_DIR, "wtf_lb_results.pkl"), "wb") as f:
+        pickle.dump(wtf_lb_results, f)
 
     print("Model evaluation complete!\n")
