@@ -457,3 +457,6 @@ def emotion():
     plot_radar_charts_scenarios(wtf_lb_clap_pivot_s, "clap_wtf_lb", classes=WTF_LB_CLASSES)
     plot_radar_charts_scenarios(wtf_lb_qwen_pivot_s, "qwen_wtf_lb", classes=WTF_LB_CLASSES)
     print("Scenario visualisation complete!\n")
+
+
+emotion()
