@@ -685,3 +685,7 @@ def embedding_scenarios(top_k, seed, n_tracks_wtf_va=20, n_per_label_wtf_lb=3, l
     # build both requested grids
     plot_dataset("wtf_va")
     plot_dataset("wtf_lb")
+
+
+embedding(top_k=25, n_tracks_deam=20, n_tracks_emopia_per_label=5, seed=42)
+embedding_scenarios(top_k=30, seed=42, n_tracks_wtf_va=20, n_per_label_wtf_lb=3)
