@@ -236,3 +236,5 @@ def accuracy_scenarios():
             plt.close()
 
     print("Scenario accuracy computation and plotting complete.\n")
+
+accuracy_scenarios()
